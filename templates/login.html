@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Entrar{% endblock %}
+{% block show_footer %}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4"
+     style="background: linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6)), url('https://assets.nflxext.com/ffe/siteui/vlv3/4da5d1a5-0913-4100-83a7-c7958fd954f5/web/BR-pt-20231218-popsignuptwoweeks-perspective_alpha_website_large.jpg') center/cover no-repeat;">
+
+  <div class="w-full max-w-md">
+    <!-- Logo -->
+    <a href="{{ url_for('catalog.home') }}" class="block text-3xl font-black mb-10 text-center" style="color: var(--sp-red);">StreamPy</a>
+
+    <!-- Card -->
+    <div class="rounded-lg p-8 md:p-10" style="background: rgba(0,0,0,0.82);">
+      <h1 class="text-2xl font-bold text-white mb-6">Entrar</h1>
+
+      <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-4">
+        <div>
+          <input type="email" name="email" placeholder="Email" required
+                 class="sp-input" autocomplete="email" />
+        </div>
+        <div>
+          <input type="password" name="password" placeholder="Senha" required
+                 class="sp-input" autocomplete="current-password" />
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="checkbox" name="remember" id="remember" class="w-4 h-4 accent-red-600" />
+          <label for="remember" class="text-sm text-gray-400">Lembrar de mim</label>
+        </div>
+        <button type="submit" class="sp-btn w-full py-3 text-base font-bold">Entrar</button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <a href="#" class="text-sm text-gray-400 hover:text-white">Esqueceu a senha?</a>
+      </div>
+
+      <div class="mt-8 pt-6 border-t border-gray-700 text-center">
+        <p class="text-gray-500 text-sm">
+          Novo aqui?
+          <a href="{{ url_for('auth.register') }}" class="text-white font-medium hover:underline ml-1">Crie sua conta</a>
+        </p>
+      </div>
+
+      <!-- Demo credentials notice -->
+      <div class="mt-4 p-3 rounded bg-gray-800 border border-gray-700">
+        <p class="text-xs text-gray-400 text-center">
+          💡 <strong class="text-gray-300">Demo:</strong> admin@streampy.com / admin123
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Ajuda{% endblock %}
+
+{% block content %}
+<div class="pt-24 px-6 md:px-12 pb-16 min-h-screen">
+  <div class="max-w-3xl mx-auto">
+
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-black text-white mb-3">Como podemos ajudar?</h1>
+      <p class="text-gray-400">Encontre respostas para as perguntas mais frequentes</p>
+      <!-- Quick search -->
+      <div class="mt-6 relative max-w-lg mx-auto">
+        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input type="text" id="faq-filter" placeholder="Buscar nas perguntas..."
+               class="sp-input pl-10 text-sm" />
+      </div>
+    </div>
+
+    <!-- Quick cards -->
+    <div class="grid sm:grid-cols-3 gap-4 mb-12">
+      {% for icon, label, link in [('🎬', 'Como funciona', '#faq'), ('💳', 'Planos e preços', '#planos'), ('🛠️', 'Problemas técnicos', '#tecnico')] %}
+      <a href="{{ link }}" class="text-center p-5 rounded-xl border border-gray-700 hover:border-gray-500 transition-all hover:bg-gray-800">
+        <div class="text-3xl mb-2">{{ icon }}</div>
+        <p class="text-sm font-medium text-white">{{ label }}</p>
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- FAQ Accordion -->
+    <div id="faq" class="mb-16">
+      <h2 class="text-xl font-bold text-white mb-6">Perguntas Frequentes</h2>
+      <div class="space-y-3" id="faq-list">
+        {% for faq in faqs %}
+        <div class="faq-item rounded-xl border border-gray-700 overflow-hidden"
+             style="background: var(--sp-card);">
+          <button class="w-full text-left px-5 py-4 flex items-center justify-between gap-4 faq-toggle"
+                  onclick="toggleFaq(this)">
+            <span class="text-sm font-medium text-white faq-question">{{ faq.question }}</span>
+            <svg class="w-4 h-4 text-gray-400 flex-shrink-0 faq-icon transition-transform" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="faq-answer hidden px-5 pb-4">
+            <p class="text-sm text-gray-400 leading-relaxed">{{ faq.answer }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Plans section -->
+    <div id="planos" class="mb-16">
+      <h2 class="text-xl font-bold text-white mb-6">Planos e Preços</h2>
+      <div class="grid sm:grid-cols-3 gap-4">
+        {% for plan, price, features, color in [
+          ('Gratuito', 'R$ 0', ['Qualidade SD (480p)', '1 tela', 'Anúncios', 'Sem download'], '#374151'),
+          ('Básico', 'R$ 9,90/mês', ['Qualidade HD (720p)', '1 tela', 'Sem anúncios', 'Sem download'], '#991b1b'),
+          ('Premium', 'R$ 18,90/mês', ['4K Ultra HD', '4 telas', 'Sem anúncios', 'Downloads offline'], '#15803d')
+        ] %}
+        <div class="rounded-xl p-5 border"
+             style="background: {{ color }}33; border-color: {{ color }}66;">
+          <p class="font-bold text-white text-base mb-1">{{ plan }}</p>
+          <p class="text-2xl font-black mb-4" style="color: {{ color }}aa; {% if plan == 'Básico' %}color: #ef4444{% elif plan == 'Premium' %}color: #22c55e{% endif %}">{{ price }}</p>
+          <ul class="space-y-2">
+            {% for feat in features %}
+            <li class="text-xs text-gray-300 flex items-center gap-2">
+              <span>✓</span> {{ feat }}
+            </li>
+            {% endfor %}
+          </ul>
+          <a href="{{ url_for('auth.register') }}"
+             class="block text-center mt-5 py-2 rounded text-sm font-semibold text-white transition-all"
+             style="background: {{ color }}99; hover:opacity-80;">
+            Começar agora
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Technical section -->
+    <div id="tecnico" class="mb-16">
+      <h2 class="text-xl font-bold text-white mb-6">Problemas Técnicos</h2>
+      <div class="space-y-4">
+        {% for problem, solution in [
+          ('Vídeo travando ou buffering', 'Reduza a qualidade de reprodução no ícone de engrenagem do player. Verifique sua conexão com internet (recomendamos 25 Mbps para 4K).'),
+          ('Áudio sem sincronismo', 'Atualize a página e reinicie a reprodução. Se persistir, tente limpar o cache do navegador.'),
+          ('Legenda não aparece', 'Clique no ícone CC no player e selecione o idioma desejado. Nem todos os títulos têm legenda disponível.'),
+          ('Não consigo fazer login', 'Verifique se o Caps Lock está desativado. Use "Esqueci minha senha" para redefinir o acesso.'),
+        ] %}
+        <div class="p-4 rounded-lg border border-gray-700" style="background: var(--sp-card);">
+          <p class="text-sm font-semibold text-white mb-1.5">⚠️ {{ problem }}</p>
+          <p class="text-sm text-gray-400">{{ solution }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="text-center p-8 rounded-2xl border border-gray-700" style="background: var(--sp-card);">
+      <h2 class="text-xl font-bold text-white mb-2">Ainda precisa de ajuda?</h2>
+      <p class="text-gray-400 text-sm mb-5">Nossa equipe está disponível de segunda a sábado, das 8h às 20h.</p>
+      <div class="flex gap-3 justify-center flex-wrap">
+        <a href="mailto:suporte@streampy.com" class="sp-btn text-sm py-2.5 px-6">📧 Enviar Email</a>
+        <a href="#" class="sp-btn-ghost text-sm py-2.5 px-6 rounded">💬 Chat ao Vivo</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function toggleFaq(btn) {
+    const answer = btn.nextElementSibling;
+    const icon = btn.querySelector('.faq-icon');
+    answer.classList.toggle('hidden');
+    icon.style.transform = answer.classList.contains('hidden') ? '' : 'rotate(180deg)';
+  }
+
+  // FAQ filter
+  document.getElementById('faq-filter').addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('.faq-item').forEach(item => {
+      const q = item.querySelector('.faq-question').textContent.toLowerCase();
+      item.style.display = q.includes(query) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

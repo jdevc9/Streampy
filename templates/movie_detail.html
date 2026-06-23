@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}{{ movie.title }}{% endblock %}
+
+{% block content %}
+<!-- Backdrop -->
+<div class="relative min-h-[60vh] flex items-end overflow-hidden">
+  <div class="absolute inset-0">
+    {% if movie.backdrop_url %}
+      <img src="{{ movie.backdrop_url }}" alt="{{ movie.title }}"
+           class="w-full h-full object-cover opacity-40" />
+    {% elif movie.poster_url %}
+      <img src="{{ movie.poster_url }}" alt="{{ movie.title }}"
+           class="w-full h-full object-cover opacity-20 scale-110 blur-sm" />
+    {% endif %}
+    <div class="gradient-bottom absolute inset-0"></div>
+    <div style="background: linear-gradient(to top, var(--sp-bg) 0%, transparent 50%)" class="absolute inset-0"></div>
+  </div>
+
+  <div class="relative z-10 px-6 md:px-12 pb-8 flex gap-8 flex-wrap md:flex-nowrap mt-24">
+    <!-- Poster -->
+    <div class="flex-shrink-0 w-40 md:w-52 rounded-lg overflow-hidden shadow-2xl border border-gray-700">
+      {% if movie.poster_url %}
+        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="w-full h-full object-cover" />
+      {% else %}
+        <div class="w-full h-72 flex items-center justify-center bg-gray-800 text-5xl">🎬</div>
+      {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div class="flex-1 min-w-0">
+      <div class="flex flex-wrap gap-2 mb-3">
+        {% for cat in movie.categories %}
+          <a href="{{ url_for('catalog.browse', slug=cat.slug) }}"
+             class="text-xs font-semibold px-2 py-1 rounded"
+             style="background: var(--sp-red); color: white;">{{ cat.name }}</a>
+        {% endfor %}
+      </div>
+
+      <h1 class="text-3xl md:text-5xl font-black text-white mb-2 leading-tight">{{ movie.title }}</h1>
+      {% if movie.original_title and movie.original_title != movie.title %}
+        <p class="text-gray-500 text-sm mb-3">{{ movie.original_title }}</p>
+      {% endif %}
+
+      <div class="flex flex-wrap items-center gap-4 mb-5 text-sm text-gray-300">
+        {% if movie.rating > 0 %}
+          <span class="flex items-center gap-1 text-green-400 font-bold text-base">
+            ⭐ {{ "%.1f"|format(movie.average_rating) }}/10
+          </span>
+        {% endif %}
+        {% if movie.year %}<span>{{ movie.year }}</span>{% endif %}
+        {% if movie.duration_formatted %}<span>{{ movie.duration_formatted }}</span>{% endif %}
+        {% if movie.content_rating %}
+          <span class="border border-gray-600 px-2 py-0.5 rounded text-xs">{{ movie.content_rating }}</span>
+        {% endif %}
+        {% if movie.language %}<span>🌍 {{ movie.language }}</span>{% endif %}
+      </div>
+
+      {% if movie.synopsis %}
+        <p class="text-gray-300 text-sm md:text-base leading-relaxed mb-5 max-w-2xl">{{ movie.synopsis }}</p>
+      {% endif %}
+
+      {% if movie.director %}
+        <p class="text-xs text-gray-500 mb-1"><span class="text-gray-300 font-medium">Diretor:</span> {{ movie.director }}</p>
+      {% endif %}
+      {% if movie.cast %}
+        <p class="text-xs text-gray-500 mb-5"><span class="text-gray-300 font-medium">Elenco:</span> {{ movie.cast }}</p>
+      {% endif %}
+
+      <!-- Action buttons -->
+      <div class="flex gap-3 flex-wrap">
+        <a href="{{ url_for('player.watch', movie_id=movie.id) }}"
+           class="sp-btn flex items-center gap-2 py-3 px-6 text-base">
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+          </svg>
+          {% if user_progress and user_progress.position_sec > 0 %}Continuar{% else %}Assistir{% endif %}
+        </a>
+        <button onclick="toggleWatchlist({{ movie.id }}, this)"
+                class="sp-btn-ghost flex items-center gap-2 py-3 px-5 text-sm rounded-md" id="watchlist-btn">
+          {% if in_watchlist %}
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Na Lista
+          {% else %}
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Minha Lista
+          {% endif %}
+        </button>
+        {% if movie.trailer_url %}
+        <a href="{{ movie.trailer_url }}" target="_blank"
+           class="sp-btn-ghost flex items-center gap-2 py-3 px-5 text-sm rounded-md">
+          ▷ Trailer
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Progress bar if watching -->
+      {% if user_progress and user_progress.position_sec > 0 %}
+      <div class="mt-4 max-w-md">
+        <div class="flex justify-between text-xs text-gray-500 mb-1">
+          <span>{{ user_progress.progress_percent }}% assistido</span>
+          {% if user_progress.completed %}<span class="text-green-400">✓ Concluído</span>{% endif %}
+        </div>
+        <div class="h-1 bg-gray-700 rounded-full">
+          <div class="h-full bg-red-600 rounded-full" style="width: {{ user_progress.progress_percent }}%"></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Reviews & Related -->
+<div class="px-6 md:px-12 pb-16 grid md:grid-cols-3 gap-10">
+
+  <!-- Reviews -->
+  <div class="md:col-span-2">
+    <h2 class="text-xl font-bold text-white mb-5">Avaliações</h2>
+
+    <!-- Write review -->
+    {% if current_user.is_authenticated %}
+    <div class="mb-6 p-5 rounded-lg border border-gray-800" style="background: var(--sp-card);">
+      <p class="text-sm font-medium text-gray-300 mb-3">{{ 'Sua avaliação' if user_review else 'Avaliar este título' }}</p>
+      <div class="star-rating mb-3">
+        {% for i in range(5, 0, -1) %}
+        <input type="radio" name="star" id="s{{ i }}" value="{{ i }}" class="hidden review-star"
+               {% if user_review and user_review.rating == i %}checked{% endif %} />
+        <label for="s{{ i }}" title="{{ i }} estrela{{ 's' if i > 1 }}">★</label>
+        {% endfor %}
+      </div>
+      <textarea id="review-comment" rows="3" placeholder="Compartilhe sua opinião (opcional)..."
+                class="sp-input text-sm resize-none mb-3">{{ user_review.comment if user_review else '' }}</textarea>
+      <button onclick="submitReview({{ movie.id }})" class="sp-btn text-sm py-2 px-5">
+        {{ 'Atualizar' if user_review else 'Enviar' }} Avaliação
+      </button>
+    </div>
+    {% else %}
+    <div class="mb-6 p-4 rounded-lg border border-gray-700 text-center">
+      <a href="{{ url_for('auth.login') }}" class="text-sm text-red-500 hover:underline">Faça login</a>
+      <span class="text-sm text-gray-500"> para deixar sua avaliação</span>
+    </div>
+    {% endif %}
+
+    <!-- Reviews list -->
+    {% if reviews %}
+    <div class="space-y-4">
+      {% for review in reviews %}
+      <div class="flex gap-3 p-4 rounded-lg border border-gray-800" style="background: var(--sp-card);">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 bg-red-700 text-white">
+          {{ review.user.username[0].upper() }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm font-medium text-white">{{ review.user.username }}</span>
+            <span class="text-yellow-400 text-xs">{{ '★' * review.rating }}{{ '☆' * (5 - review.rating) }}</span>
+            <span class="text-xs text-gray-600 ml-auto">{{ review.created_at.strftime('%d/%m/%Y') }}</span>
+          </div>
+          {% if review.comment %}
+            <p class="text-sm text-gray-400">{{ review.comment }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-600 text-sm">Seja o primeiro a avaliar!</p>
+    {% endif %}
+  </div>
+
+  <!-- Related -->
+  <div>
+    <h2 class="text-xl font-bold text-white mb-5">Títulos Relacionados</h2>
+    <div class="space-y-3">
+      {% for rel in related %}
+      <a href="{{ url_for('catalog.movie_detail', movie_id=rel.id) }}"
+         class="flex gap-3 rounded-lg overflow-hidden hover:bg-gray-800 transition-colors p-2 -mx-2">
+        <div class="w-16 flex-shrink-0 rounded overflow-hidden bg-gray-800">
+          {% if rel.poster_url %}
+            <img src="{{ rel.poster_url }}" alt="{{ rel.title }}" class="w-full aspect-[2/3] object-cover" />
+          {% else %}
+            <div class="w-full aspect-[2/3] flex items-center justify-center text-gray-600 text-xl">🎬</div>
+          {% endif %}
+        </div>
+        <div class="flex-1 min-w-0 py-1">
+          <p class="text-sm font-medium text-white leading-tight mb-1">{{ rel.title }}</p>
+          <p class="text-xs text-gray-500">{{ rel.year or '' }}</p>
+          <p class="text-xs text-green-400 font-medium">{{ "%.1f"|format(rel.average_rating) }}★</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function submitReview(movieId) {
+  const ratingEl = document.querySelector('.review-star:checked');
+  if (!ratingEl) { showToast('Selecione uma nota (1-5 estrelas)', 'error'); return; }
+  const rating = parseInt(ratingEl.value);
+  const comment = document.getElementById('review-comment').value.trim();
+  const res = await fetch('/api/review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ movie_id: movieId, rating, comment })
+  });
+  const data = await res.json();
+  if (res.ok) { showToast(data.message, 'success'); setTimeout(() => location.reload(), 1500); }
+  else showToast(data.error || 'Erro ao salvar', 'error');
+}
+</script>
+{% endblock %}

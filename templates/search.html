@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Buscar{% endblock %}
+
+{% block content %}
+<div class="pt-24 px-6 md:px-12 pb-16 min-h-screen">
+
+  <!-- Search Header -->
+  <div class="max-w-3xl mx-auto mb-10">
+    <h1 class="text-3xl font-bold text-white mb-6">Buscar</h1>
+    <form method="GET" action="{{ url_for('catalog.search') }}" id="search-form">
+      <div class="relative">
+        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input type="text" name="q" id="search-input"
+               value="{{ query }}"
+               placeholder="Títulos, atores, diretores, sinopse..."
+               autofocus
+               class="w-full pl-12 pr-4 py-4 text-lg rounded-lg text-white outline-none"
+               style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);" />
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-3 mt-4">
+        <select name="genre" class="sp-input w-auto text-sm py-2">
+          <option value="">Todos os gêneros</option>
+          {% for cat in categories %}
+            <option value="{{ cat.slug }}" {% if genre == cat.slug %}selected{% endif %}>
+              {{ cat.icon }} {{ cat.name }}
+            </option>
+          {% endfor %}
+        </select>
+
+        <select name="year" class="sp-input w-auto text-sm py-2">
+          <option value="">Qualquer ano</option>
+          {% for y in range(2024, 1979, -1) %}
+            <option value="{{ y }}" {% if year == y|string %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="sort" class="sp-input w-auto text-sm py-2">
+          <option value="relevance" {% if sort == 'relevance' %}selected{% endif %}>Relevância</option>
+          <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Melhor avaliados</option>
+          <option value="year" {% if sort == 'year' %}selected{% endif %}>Mais recentes</option>
+          <option value="title" {% if sort == 'title' %}selected{% endif %}>A-Z</option>
+        </select>
+
+        <button type="submit" class="sp-btn py-2 px-6 text-sm">Buscar</button>
+        {% if query or genre or year %}
+          <a href="{{ url_for('catalog.search') }}" class="sp-btn-ghost py-2 px-4 text-sm rounded">Limpar</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Results -->
+  {% if query or genre or year %}
+    <div class="mb-6 flex items-center justify-between">
+      <p class="text-gray-400 text-sm">
+        {% if movies %}
+          <span class="text-white font-semibold">{{ movies|length }}</span> resultado{{ 's' if movies|length != 1 }}
+          {% if query %}para <span class="text-white">"{{ query }}"</span>{% endif %}
+        {% else %}
+          Nenhum resultado encontrado {% if query %}para "{{ query }}"{% endif %}
+        {% endif %}
+      </p>
+    </div>
+
+    {% if movies %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        {% for movie in movies %}
+        <div class="movie-card relative group rounded-md overflow-hidden cursor-pointer">
+          <a href="{{ url_for('catalog.movie_detail', movie_id=movie.id) }}">
+            <div class="aspect-[2/3] bg-gray-800">
+              {% if movie.poster_url %}
+                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}"
+                     class="w-full h-full object-cover" loading="lazy" />
+              {% else %}
+                <div class="w-full h-full flex flex-col items-center justify-center text-gray-600 gap-2 p-3">
+                  <span class="text-4xl">🎬</span>
+                  <span class="text-xs text-center text-gray-500">{{ movie.title }}</span>
+                </div>
+              {% endif %}
+            </div>
+            <div class="card-overlay absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col justify-end p-3">
+              <p class="text-white text-xs font-semibold mb-1 leading-tight">{{ movie.title }}</p>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-green-400 font-bold">{{ "%.1f"|format(movie.average_rating) }}★</span>
+                <span class="text-gray-400">{{ movie.year or '' }}</span>
+              </div>
+              {% for cat in movie.categories[:1] %}
+              <span class="text-xs text-gray-300 mt-1">{{ cat.name }}</span>
+              {% endfor %}
+              <a href="{{ url_for('player.watch', movie_id=movie.id) }}"
+                 class="mt-2 py-1 text-xs text-center font-semibold rounded text-white"
+                 style="background: var(--sp-red);">▶ Assistir</a>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-20">
+        <div class="text-6xl mb-4">🔍</div>
+        <p class="text-xl text-gray-400 mb-2">Nenhum resultado</p>
+        <p class="text-gray-600 text-sm">Tente outros termos ou explore por <a href="{{ url_for('catalog.browse') }}" class="text-red-500 hover:underline">categorias</a>.</p>
+      </div>
+    {% endif %}
+
+  {% else %}
+    <!-- Browse categories when no search -->
+    <div class="text-center mb-10">
+      <h2 class="text-xl font-bold text-white mb-2">Explorar por Categoria</h2>
+      <p class="text-gray-500 text-sm">Ou comece a digitar para buscar</p>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+      {% for cat in categories %}
+      <a href="{{ url_for('catalog.browse', slug=cat.slug) }}"
+         class="rounded-lg p-5 text-center transition-all hover:scale-105 cursor-pointer border border-transparent hover:border-gray-600"
+         style="background: {{ cat.color }}22;">
+        <div class="text-3xl mb-2">{{ cat.icon }}</div>
+        <p class="text-white font-medium text-sm">{{ cat.name }}</p>
+        <p class="text-gray-500 text-xs mt-1">{{ cat.movies|length }} títulos</p>
+      </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

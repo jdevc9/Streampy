@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Início{% endblock %}
+
+{% block content %}
+<!-- HERO BANNER -->
+{% if featured %}
+<div class="relative min-h-screen flex items-center overflow-hidden">
+  <!-- Backdrop image -->
+  <div class="absolute inset-0">
+    {% if featured.backdrop_url %}
+      <img src="{{ featured.backdrop_url }}" alt="{{ featured.title }}"
+           class="w-full h-full object-cover opacity-50" />
+    {% elif featured.poster_url %}
+      <img src="{{ featured.poster_url }}" alt="{{ featured.title }}"
+           class="w-full h-full object-cover opacity-30 scale-110" />
+    {% else %}
+      <div class="w-full h-full bg-gradient-to-br from-red-900 to-gray-900"></div>
+    {% endif %}
+    <div class="gradient-left absolute inset-0"></div>
+    <div class="gradient-bottom absolute inset-0"></div>
+  </div>
+
+  <!-- Hero Content -->
+  <div class="relative z-10 px-8 md:px-16 max-w-2xl mt-16">
+    {% if featured.categories %}
+      <div class="flex gap-2 mb-3">
+        {% for cat in featured.categories[:2] %}
+          <span class="text-xs font-semibold px-2 py-1 rounded" style="background: var(--sp-red); color: white;">{{ cat.name }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
+    <h1 class="text-4xl md:text-6xl font-black text-white mb-4 leading-tight">{{ featured.title }}</h1>
+    
+    <div class="flex items-center gap-4 mb-4 text-sm text-gray-300">
+      {% if featured.rating %}<span class="text-green-400 font-bold">{{ "%.1f"|format(featured.average_rating) }}/10</span>{% endif %}
+      {% if featured.year %}<span>{{ featured.year }}</span>{% endif %}
+      {% if featured.duration_formatted %}<span>{{ featured.duration_formatted }}</span>{% endif %}
+      {% if featured.content_rating %}<span class="border border-gray-500 px-1 rounded text-xs">{{ featured.content_rating }}</span>{% endif %}
+    </div>
+    
+    {% if featured.synopsis %}
+    <p class="text-gray-300 text-sm md:text-base mb-6 leading-relaxed line-clamp-3 max-w-lg">
+      {{ featured.synopsis }}
+    </p>
+    {% endif %}
+    
+    <div class="flex gap-3 flex-wrap">
+      <a href="{{ url_for('player.watch', movie_id=featured.id) }}"
+         class="sp-btn flex items-center gap-2 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/>
+        </svg>
+        Assistir Agora
+      </a>
+      <a href="{{ url_for('catalog.movie_detail', movie_id=featured.id) }}"
+         class="sp-btn-ghost flex items-center gap-2 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Mais Detalhes
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- CONTENT ROWS -->
+<div class="px-6 md:px-12 pb-16 -mt-32 relative z-10">
+
+  <!-- Continue Watching -->
+  {% if continue_watching %}
+  <section class="mb-10">
+    <h2 class="text-xl font-bold text-white mb-4">Continuar Assistindo</h2>
+    <div class="flex gap-3 overflow-x-auto pb-2 scroll-snap">
+      {% for movie, pct in continue_watching %}
+      <div class="movie-card flex-shrink-0 w-48 md:w-56 relative group cursor-pointer rounded-md overflow-hidden" style="min-width: 11rem;">
+        <a href="{{ url_for('player.watch', movie_id=movie.id) }}">
+          <div class="aspect-video bg-gray-800">
+            {% if movie.poster_url %}
+              <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="w-full h-full object-cover" />
+            {% else %}
+              <div class="w-full h-full flex items-center justify-center text-gray-600 text-3xl">🎬</div>
+            {% endif %}
+          </div>
+          <!-- Progress bar -->
+          <div class="h-1 bg-gray-700">
+            <div class="h-full bg-red-600 transition-all" style="width: {{ pct }}%"></div>
+          </div>
+          <div class="p-2">
+            <p class="text-xs text-white font-medium truncate">{{ movie.title }}</p>
+            <p class="text-xs text-gray-500">{{ pct }}% assistido</p>
+          </div>
+          <!-- Play overlay -->
+          <div class="card-overlay absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center rounded-md">
+            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-black ml-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+              </svg>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Trending -->
+  {% if trending %}
+  <section class="mb-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-white">🔥 Em Alta</h2>
+      <a href="{{ url_for('catalog.browse') }}" class="text-xs text-gray-400 hover:text-white">Ver tudo →</a>
+    </div>
+    {% include "partials/movie_row.html" with context %}
+    {{ movie_row(trending, 'trending-row') }}
+  </section>
+  {% endif %}
+
+  <!-- Categories -->
+  {% for category in categories %}
+    {% if category.movies %}
+    <section class="mb-10">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-white">{{ category.icon }} {{ category.name }}</h2>
+        <a href="{{ url_for('catalog.browse', slug=category.slug) }}" class="text-xs text-gray-400 hover:text-white">Ver tudo →</a>
+      </div>
+      <div class="flex gap-3 overflow-x-auto pb-2 scroll-snap" id="row-{{ category.id }}">
+        {% for movie in category.movies[:20] %}
+          {% include "movie_card.html" %}
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  {% endfor %}
+
+  <!-- Top Rated -->
+  {% if top_rated %}
+  <section class="mb-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-white">⭐ Melhores Avaliados</h2>
+    </div>
+    <div class="flex gap-3 overflow-x-auto pb-2 scroll-snap">
+      {% for movie in top_rated %}
+        {% include "movie_card.html" %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% macro movie_row(movies, row_id) %}
+<div class="flex gap-3 overflow-x-auto pb-2 scroll-snap" id="{{ row_id }}">
+  {% for movie in movies %}
+    {% include "movie_card.html" %}
+  {% endfor %}
+</div>
+{% endmacro %}

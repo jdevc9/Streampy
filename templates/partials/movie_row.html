@@ -1,0 +1,9 @@
+<div class="movie-row"
+    {% for movie in movies %}
+        <div class="movie">
+             <img
+src="{{ movie.cover_url }}">
+            <h3>{{ movie.title }}</h3>
+        </div>
+     {% endfor %}
+</div>

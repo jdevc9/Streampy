@@ -1,0 +1,30 @@
+<!-- Reusable movie card for all rows -->
+<div class="movie-card flex-shrink-0 w-40 md:w-48 relative group cursor-pointer rounded-md overflow-hidden" style="min-width: 10rem;">
+  <a href="{{ url_for('catalog.movie_detail', movie_id=movie.id) }}" class="block">
+    <div class="aspect-[2/3] bg-gray-800">
+      {% if movie.poster_url %}
+        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}"
+             class="w-full h-full object-cover"
+             loading="lazy" />
+      {% else %}
+        <div class="w-full h-full flex flex-col items-center justify-center text-gray-600 gap-2">
+          <span class="text-4xl">🎬</span>
+          <span class="text-xs text-center px-2">{{ movie.title }}</span>
+        </div>
+      {% endif %}
+    </div>
+    <!-- Hover overlay -->
+    <div class="card-overlay absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col justify-end p-3 rounded-md">
+      <p class="text-white text-xs font-semibold leading-tight mb-1">{{ movie.title }}</p>
+      <div class="flex items-center justify-between">
+        <span class="text-green-400 text-xs font-bold">{{ "%.1f"|format(movie.average_rating) }}★</span>
+        <span class="text-gray-400 text-xs">{{ movie.year or '' }}</span>
+      </div>
+      <div class="flex gap-2 mt-2">
+        <a href="{{ url_for('player.watch', movie_id=movie.id) }}"
+           class="flex-1 text-center py-1 text-xs font-semibold rounded text-white"
+           style="background: var(--sp-red);">▶ Assistir</a>
+      </div>
+    </div>
+  </a>
+</div>

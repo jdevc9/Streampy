@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}StreamPy{% endblock %} — StreamPy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    :root {
+      --sp-red: #e50914;
+      --sp-red-dark: #b20710;
+      --sp-bg: #141414;
+      --sp-card: #1f1f1f;
+      --sp-border: #2a2a2a;
+      --sp-text: #e5e5e5;
+      --sp-muted: #808080;
+    }
+    body { background-color: var(--sp-bg); color: var(--sp-text); }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+    .scroll-snap { scroll-snap-type: x mandatory; }
+    .scroll-snap > * { scroll-snap-align: start; }
+    .movie-card:hover .card-overlay { opacity: 1; transform: scale(1.05); }
+    .movie-card:hover img { transform: scale(1.05); }
+    .movie-card img { transition: transform 0.3s ease; }
+    .card-overlay { opacity: 0; transition: all 0.3s ease; }
+    .gradient-bottom { background: linear-gradient(to top, rgba(20,20,20,1) 0%, rgba(20,20,20,0.4) 60%, transparent 100%); }
+    .gradient-left { background: linear-gradient(to right, rgba(20,20,20,1) 30%, transparent 100%); }
+    .sp-btn { background: var(--sp-red); color: white; padding: 0.6rem 1.5rem; border-radius: 4px; font-weight: 600; font-size: 0.95rem; transition: background 0.2s; border: none; cursor: pointer; }
+    .sp-btn:hover { background: var(--sp-red-dark); }
+    .sp-btn-ghost { background: rgba(109,109,110,0.7); color: white; padding: 0.6rem 1.5rem; border-radius: 4px; font-weight: 600; cursor: pointer; border: none; }
+    .sp-btn-ghost:hover { background: rgba(109,109,110,0.4); }
+    .sp-input { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 4px; padding: 0.65rem 1rem; width: 100%; outline: none; transition: border-color 0.2s; }
+    .sp-input:focus { border-color: white; }
+    .nav-scrolled { background: rgba(20,20,20,0.98) !important; box-shadow: 0 2px 20px rgba(0,0,0,0.5); }
+    .toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; padding: 0.9rem 1.5rem; border-radius: 6px; font-weight: 500; font-size: 0.9rem; transform: translateY(100px); opacity: 0; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .star-rating label { color: #555; font-size: 1.6rem; cursor: pointer; transition: color 0.1s; }
+    .star-rating input:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label { color: #f5c518; }
+    .star-rating { display: flex; flex-direction: row-reverse; gap: 4px; }
+    {% block extra_css %}{% endblock %}
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- NAVBAR -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-3 px-6 flex items-center justify-between"
+     style="background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);">
+  <div class="flex items-center gap-8">
+    <a href="{{ url_for('catalog.home') }}" class="text-2xl font-black tracking-wider" style="color: var(--sp-red);">StreamPy</a>
+    {% if current_user.is_authenticated %}
+    <div class="hidden md:flex items-center gap-5 text-sm font-medium">
+      <a href="{{ url_for('catalog.home') }}" class="text-white hover:text-gray-300 transition-colors">Início</a>
+      <a href="{{ url_for('catalog.browse') }}" class="text-gray-300 hover:text-white transition-colors">Filmes</a>
+      <a href="{{ url_for('catalog.browse') }}?type=series" class="text-gray-300 hover:text-white transition-colors">Séries</a>
+      <a href="{{ url_for('auth.profile') }}" class="text-gray-300 hover:text-white transition-colors">Minha Lista</a>
+    </div>
+    {% endif %}
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="{{ url_for('catalog.search') }}" class="text-white hover:text-gray-300">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    </a>
+    {% if current_user.is_authenticated %}
+      <a href="{{ url_for('auth.profile') }}" class="flex items-center gap-2 text-sm">
+        <div class="w-8 h-8 rounded bg-red-600 flex items-center justify-center font-bold text-white text-xs">
+          {{ current_user.username[0].upper() }}
+        </div>
+      </a>
+      <a href="{{ url_for('auth.logout') }}" class="text-xs text-gray-400 hover:text-white transition-colors hidden md:block">Sair</a>
+    {% else %}
+      <a href="{{ url_for('auth.login') }}" class="sp-btn text-sm py-2 px-4">Entrar</a>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- FLASH MESSAGES -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div id="flash-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2">
+      {% for category, message in messages %}
+        <div class="flash-msg px-4 py-3 rounded-lg text-sm font-medium shadow-lg
+          {% if category == 'error' %}bg-red-600 text-white
+          {% elif category == 'success' %}bg-green-600 text-white
+          {% else %}bg-gray-700 text-white{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- MAIN CONTENT -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<!-- FOOTER -->
+{% block show_footer %}
+<footer class="py-12 px-8 mt-16 border-t border-gray-800">
+  <div class="max-w-5xl mx-auto">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-sm text-gray-500">
+      <div>
+        <p class="font-bold text-red-600 mb-3 text-base">StreamPy</p>
+        <p class="mb-2"><a href="{{ url_for('help_page') if false else '#' }}" class="hover:text-white">FAQ</a></p>
+        <p class="mb-2"><a href="{{ url_for('catalog.help_page') }}" class="hover:text-white">Ajuda</a></p>
+        <p><a href="#" class="hover:text-white">Contato</a></p>
+      </div>
+      <div>
+        <p class="font-semibold text-gray-300 mb-3">Conta</p>
+        {% if current_user.is_authenticated %}
+          <p class="mb-2"><a href="{{ url_for('auth.profile') }}" class="hover:text-white">Meu Perfil</a></p>
+          <p><a href="{{ url_for('auth.logout') }}" class="hover:text-white">Sair</a></p>
+        {% else %}
+          <p class="mb-2"><a href="{{ url_for('auth.login') }}" class="hover:text-white">Entrar</a></p>
+          <p><a href="{{ url_for('auth.register') }}" class="hover:text-white">Criar conta</a></p>
+        {% endif %}
+      </div>
+      <div>
+        <p class="font-semibold text-gray-300 mb-3">Explorar</p>
+        <p class="mb-2"><a href="{{ url_for('catalog.browse') }}" class="hover:text-white">Filmes</a></p>
+        <p class="mb-2"><a href="{{ url_for('catalog.search') }}" class="hover:text-white">Buscar</a></p>
+        <p><a href="{{ url_for('catalog.browse') }}" class="hover:text-white">Categorias</a></p>
+      </div>
+      <div>
+        <p class="font-semibold text-gray-300 mb-3">StreamPy</p>
+        <p class="text-xs leading-relaxed">
+          Projeto open-source de portfólio. Não afiliado à Netflix.<br/>
+          Dados via TMDB API.
+        </p>
+      </div>
+    </div>
+    <p class="text-center text-xs text-gray-700 mt-10">© 2024 StreamPy — Feito com Python & Flask</p>
+  </div>
+</footer>
+{% endblock %}
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast" class="toast bg-gray-800 text-white"></div>
+
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('navbar');
+    if (window.scrollY > 50) nav.classList.add('nav-scrolled');
+    else nav.classList.remove('nav-scrolled');
+  });
+
+  // Auto-dismiss flash messages
+  setTimeout(() => {
+    document.querySelectorAll('.flash-msg').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.5s';
+      setTimeout(() => el.remove(), 500);
+    });
+  }, 4000);
+
+  // Toast helper
+  function showToast(msg, type='info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast show ${type === 'error' ? 'bg-red-700' : type === 'success' ? 'bg-green-700' : 'bg-gray-700'} text-white`;
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // Watchlist toggle (global)
+  async function toggleWatchlist(movieId, btn) {
+    try {
+      const res = await fetch('/api/watchlist/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ movie_id: movieId })
+      });
+      if (res.status === 401) { window.location.href = '/auth/login'; return; }
+      const data = await res.json();
+      showToast(data.message, 'success');
+      if (btn) {
+        const isAdded = data.status === 'added';
+        btn.innerHTML = isAdded
+          ? '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Na Lista'
+          : '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Minha Lista';
+      }
+    } catch(e) { showToast('Erro ao atualizar lista', 'error'); }
+  }
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>
